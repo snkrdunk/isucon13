@@ -1,4 +1,3 @@
-TRUNCATE TABLE themes;
 TRUNCATE TABLE reservation_slots;
 TRUNCATE TABLE livestream_viewers_history;
 TRUNCATE TABLE livecomment_reports;
@@ -41,6 +40,13 @@ CREATE TABLE `livecomments` (
   `created_at` BIGINT NOT NULL
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
+DROP TABLE IF EXISTS `themes`;
+CREATE TABLE `themes` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `user_id` BIGINT NOT NULL,
+  `dark_mode` BOOLEAN NOT NULL
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+
 ALTER TABLE `themes` auto_increment = 1;
 ALTER TABLE `icons` auto_increment = 1;
 ALTER TABLE `reservation_slots` auto_increment = 1;
@@ -58,3 +64,4 @@ ALTER TABLE `livestream_tags` ADD INDEX idx_01(livestream_id);
 ALTER TABLE `icons` ADD INDEX idx_02(user_id);
 ALTER TABLE `ng_words` ADD INDEX idx_04(user_id, livestream_id);
 ALTER TABLE `livecomments` ADD INDEX idx_05(livestream_id);
+ALTER TABLE `themes` ADD INDEX idx_06(user_id);
