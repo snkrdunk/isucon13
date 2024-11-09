@@ -220,25 +220,25 @@ Resources:
   #   Properties:
   #     Domain: vpc
   #     InstanceId: !Ref QualifyInstance3
-  # BenchmarkerInstance:
-  #   Type: AWS::EC2::Instance
-  #   Properties:
-  #     ImageId: ami-006d211cb716fe8a0
-  #     InstanceType: c5.xlarge
-  #     SecurityGroupIds:
-  #       - !Ref SecurityGroup
-  #     SubnetId: !Ref Subnet
-  #     KeyName: !Ref MyKeyPair
-  #     PrivateIpAddress: "192.168.0.14"
-  #     IamInstanceProfile: !Ref InstanceProfile
-  #     BlockDeviceMappings:
-  #       - DeviceName: /dev/sda1
-  #         Ebs:
-  #           VolumeSize: 20
-  #           VolumeType: gp3
-  #     Tags:
-  #       - Key: Name
-  #         Value: isucon13-benchmarker
+  BenchmarkerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-006d211cb716fe8a0
+      InstanceType: c5.xlarge
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      SubnetId: !Ref Subnet
+      KeyName: !Ref MyKeyPair
+      PrivateIpAddress: "192.168.0.14"
+      IamInstanceProfile: !Ref InstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: isucon13-benchmarker
   BenchmarkerInstanceIP:
     Type: AWS::EC2::EIP
     Properties:
