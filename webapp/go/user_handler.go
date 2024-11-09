@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -117,11 +118,15 @@ func getIconHandler(c echo.Context) error {
 	fmt.Println("iconHashString: ", iconHashString)
 	iconHash := sha256.Sum256(image)
 	fmt.Println("iconHash: ", fmt.Sprintf("%x", iconHash))
-	// if iconHashString != "" {
-	// 	if fmt.Sprintf("%x", iconHash) == iconHashString {
-	// 		return c.NoContent(http.StatusNotModified)
-	// 	}
-	// }
+	if iconHashString != "" {
+		requestHash, err := strconv.Unquote(iconHashString)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check If-None-Match: "+err.Error())
+		}
+		if fmt.Sprintf("%x", iconHash) == requestHash {
+			return c.NoContent(http.StatusNotModified)
+		}
+	}
 
 	return c.Blob(http.StatusOK, "image/jpeg", image)
 }
