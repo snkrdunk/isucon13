@@ -1,0 +1,26 @@
+all:
+  children:
+    bench:
+      hosts:
+        bench01:
+          ansible_host: 52.198.104.137
+#    nginx:
+#      hosts:
+#        nginx01:
+#          ansible_host: 127.0.0.1
+#    webapp:
+#      hosts:
+#        webapp01:
+#          ansible_host: 127.0.0.1
+#    db:
+#      hosts:
+#        db01:
+#          ansible_host: 127.0.0.1
+    webapp:
+      hosts:
+        webapp01:
+          ansible_host: 57.182.81.174
+#    db:
+#      hosts:
+#        db01:
+#          ansible_host: 127.0.0.1

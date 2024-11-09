@@ -1,0 +1,8 @@
+- name: Install slp
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/home/isucon/.local/go/bin"
+  shell:
+    chdir: /home/isucon/
+    cmd: "{{ item }}"
+  with_items:
+    - "go install github.com/tkuchiki/slp/cmd/slp@latest"

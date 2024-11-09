@@ -1,0 +1,13 @@
+- name: Deploy configuration files
+  become: true
+  copy:
+    src: "{{ item }}"
+    dest: "/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  notify: restart_mysql
+  with_items:
+    - etc/systemd/system/mysql.service
+    - etc/mysql/mysql.conf.d/mysqld.cnf
