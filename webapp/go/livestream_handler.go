@@ -555,14 +555,14 @@ func fillLivestreamsResponse(ctx context.Context, tx *sqlx.Tx, livestreamModels 
 	for i := range livestreamModels {
 		livestreamIDs[i] = livestreamModels[i].ID
 	}
-	sql, params, err = sqlx.In(`SELECT lt.livestream_id, t.id AS tag_id, t.name AS tag_name FROM livestream_tags AS lt JOIN tags AS t ON lt.tag_id=t.id WHERE lt.livestream_id IN (?)`, livestreamIDs)
+	sql, params, err = sqlx.In(`SELECT lt.livestream_id AS livestream_id, t.id AS tag_id, t.name AS tag_name FROM livestream_tags AS lt JOIN tags AS t ON lt.tag_id=t.id WHERE lt.livestream_id IN (?)`, livestreamIDs)
 	if err != nil {
 		return nil, err
 	}
 	type LivestreamTag struct {
-		LivestreamID int64  `json:"livestream_id"`
-		TagID        int64  `json:"tag_id"`
-		TagName      string `json:"tag_name"`
+		LivestreamID int64  `db:"livestream_id"`
+		TagID        int64  `db:"tag_id"`
+		TagName      string `db:"tag_name"`
 	}
 	livestreamTagModels := []LivestreamTag{}
 	if err := tx.SelectContext(ctx, &livestreamTagModels, sql, params...); err != nil {
