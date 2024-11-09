@@ -90,7 +90,7 @@ var run = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:        "target",
-			Value:       fmt.Sprintf("http://pipe.u.isucon.dev:%d", config.TargetPort),
+			Value:       fmt.Sprintf("http://pipe.u.isucon.local:%d", config.TargetPort),
 			Destination: &config.TargetBaseURL,
 			EnvVar:      "BENCH_TARGET_URL",
 		},

@@ -9,4 +9,4 @@
   with_items:
     - ../webapp/pdns/init_zone.sh
     - ../webapp/pdns/named.conf
-    - ../webapp/pdns/u.isucon.dev.zone
+    - ../webapp/pdns/u.isucon.local.zone

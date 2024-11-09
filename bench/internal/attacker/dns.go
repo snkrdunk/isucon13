@@ -27,7 +27,7 @@ const (
 	letterIdxBits = 6
 	letterIdxMask = 1<<letterIdxBits - 1
 	letterIdxMax  = 63 / letterIdxBits
-	zone          = "u.isucon.dev."
+	zone          = "u.isucon.local."
 	maxLength     = 22
 )
 
