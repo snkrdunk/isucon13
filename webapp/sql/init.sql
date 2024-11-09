@@ -1,7 +1,6 @@
 TRUNCATE TABLE reservation_slots;
 TRUNCATE TABLE livestream_viewers_history;
 TRUNCATE TABLE livecomment_reports;
-TRUNCATE TABLE reactions;
 TRUNCATE TABLE tags;
 TRUNCATE TABLE livestreams;
 TRUNCATE TABLE users;
@@ -46,6 +45,17 @@ CREATE TABLE `themes` (
   `user_id` BIGINT NOT NULL,
   `dark_mode` BOOLEAN NOT NULL
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+
+DROP TABLE IF EXISTS `reactions`;
+CREATE TABLE `reactions` (
+     `id` bigint NOT NULL AUTO_INCREMENT,
+     `user_id` bigint NOT NULL,
+     `livestream_id` bigint NOT NULL,
+     `emoji_name` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+     `created_at` bigint NOT NULL,
+     PRIMARY KEY (`id`),
+     KEY `idx_07` (`livestream_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 ALTER TABLE `themes` auto_increment = 1;
 ALTER TABLE `icons` auto_increment = 1;
