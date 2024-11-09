@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -157,6 +158,8 @@ func postIconHandler(c echo.Context) error {
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
+
+	deleteIconHashCache(userID)
 
 	return c.JSON(http.StatusCreated, &PostIconResponse{
 		ID: iconID,
@@ -404,17 +407,10 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		return User{}, err
 	}
 
-	var image []byte
-	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userModel.ID); err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return User{}, err
-		}
-		image, err = os.ReadFile(fallbackImage)
-		if err != nil {
-			return User{}, err
-		}
+	iconHash, err := getIconHashCache(ctx, userModel.ID)
+	if err != nil {
+		return User{}, err
 	}
-	iconHash := sha256.Sum256(image)
 
 	user := User{
 		ID:          userModel.ID,
@@ -425,10 +421,40 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			ID:       themeModel.ID,
 			DarkMode: themeModel.DarkMode,
 		},
-		IconHash: fmt.Sprintf("%x", iconHash),
+		IconHash: iconHash,
 	}
 
 	return user, nil
+}
+
+var iconHashCache sync.Map
+
+func deleteIconHashCache(userID int64) {
+	iconHashCache.Delete(userID)
+}
+
+func getIconHashCache(ctx context.Context, userID int64) (string, error) {
+	v, ok := iconHashCache.Load(userID)
+	if ok {
+		return v.(string), nil
+	}
+
+	var image []byte
+	if err := dbConn.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userID); err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return "", err
+		}
+		image, err = os.ReadFile(fallbackImage)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	hash := fmt.Sprintf("%x", sha256.Sum256(image))
+
+	iconHashCache.Store(userID, hash)
+
+	return hash, nil
 }
 
 func fillUsersResponse(ctx context.Context, tx *sqlx.Tx, userModels []UserModel) ([]User, error) {
@@ -453,23 +479,6 @@ func fillUsersResponse(ctx context.Context, tx *sqlx.Tx, userModels []UserModel)
 		themeMap[theme.UserID] = theme
 	}
 
-	type imagePerUser struct {
-		UserID int64  `db:"user_id"`
-		Image  []byte `db:"image"`
-	}
-	images := make([]imagePerUser, len(userIDs))
-	sql, params, err = sqlx.In("SELECT user_id, image FROM icons WHERE user_id IN (?)", userIDs)
-	if err != nil {
-		return nil, err
-	}
-	if err := tx.SelectContext(ctx, &images, sql, params...); err != nil {
-		return nil, err
-	}
-	imageMap := make(map[int64][]byte)
-	for _, image := range images {
-		imageMap[image.UserID] = image.Image
-	}
-
 	users := make([]User, len(userIDs))
 	for i, user := range userModels {
 		theme, ok := themeMap[user.ID]
@@ -477,14 +486,10 @@ func fillUsersResponse(ctx context.Context, tx *sqlx.Tx, userModels []UserModel)
 			return nil, fmt.Errorf("theme not found for user_id=%d", user.ID)
 		}
 
-		image, ok := imageMap[user.ID]
-		if !ok {
-			image, err = os.ReadFile(fallbackImage)
-			if err != nil {
-				return nil, err
-			}
+		hash, err := getIconHashCache(ctx, user.ID)
+		if err != nil {
+			return nil, err
 		}
-		iconHash := sha256.Sum256(image)
 
 		users[i] = User{
 			ID:          user.ID,
@@ -495,7 +500,7 @@ func fillUsersResponse(ctx context.Context, tx *sqlx.Tx, userModels []UserModel)
 				ID:       theme.ID,
 				DarkMode: theme.DarkMode,
 			},
-			IconHash: fmt.Sprintf("%x", iconHash),
+			IconHash: hash,
 		}
 	}
 
