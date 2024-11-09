@@ -106,24 +106,28 @@ func getIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
 
+	h, err := getIconHashCache(ctx, user.ID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get icon hash: "+err.Error())
+	}
+
+	iconHashString := c.Request().Header.Get("If-None-Match")
+	if iconHashString != "" {
+		requestHash, err := strconv.Unquote(iconHashString)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check If-None-Match: "+err.Error())
+		}
+		if h == requestHash {
+			return c.NoContent(http.StatusNotModified)
+		}
+	}
+
 	var image []byte
 	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", user.ID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return c.File(fallbackImage)
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
-		}
-	}
-
-	iconHashString := c.Request().Header.Get("If-None-Match")
-	iconHash := sha256.Sum256(image)
-	if iconHashString != "" {
-		requestHash, err := strconv.Unquote(iconHashString)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check If-None-Match: "+err.Error())
-		}
-		if fmt.Sprintf("%x", iconHash) == requestHash {
-			return c.NoContent(http.StatusNotModified)
 		}
 	}
 
