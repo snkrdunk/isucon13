@@ -68,16 +68,11 @@ func getReactionsHandler(c echo.Context) error {
 	}
 
 	reactionUserIDs := make([]int64, len(reactionModels))
-	reactionLiveStreamIDs := make([]int64, len(reactionModels))
 	for i := range reactionModels {
 		reactionUserIDs[i] = reactionModels[i].UserID
-		reactionLiveStreamIDs[i] = reactionModels[i].LivestreamID
 	}
 
 	if len(reactionUserIDs) == 0 {
-		return c.JSON(http.StatusOK, []Reaction{})
-	}
-	if len(reactionLiveStreamIDs) == 0 {
 		return c.JSON(http.StatusOK, []Reaction{})
 	}
 
@@ -100,28 +95,18 @@ func getReactionsHandler(c echo.Context) error {
 		userMap[userModels[i].ID] = user
 	}
 
-	sql, params, err = sqlx.In(`SELECT * FROM livestreams WHERE id IN (?)`, reactionLiveStreamIDs)
-	if err != nil {
-		log.Fatal(err)
-	}
-	livestreamModels := []LivestreamModel{}
-	if err := tx.SelectContext(ctx, &livestreamModels, sql, params...); err != nil {
+	livestreamModel := LivestreamModel{}
+	if err := tx.GetContext(ctx, &livestreamModel, "SELECT * FROM livestreams WHERE id = ?", livestreamID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill reaction: "+err.Error())
 	}
-
-	liveStreams, err := fillLivestreamsResponse(ctx, tx, livestreamModels)
+	livestream, err := fillLivestreamResponse(ctx, tx, livestreamModel)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill reaction: "+err.Error())
-	}
-	liveStreamMap := make(map[int64]Livestream)
-	for i, livestream := range liveStreams {
-		liveStreamMap[livestreamModels[i].ID] = livestream
 	}
 
 	reactions := make([]Reaction, len(reactionModels))
 	for i := range reactionModels {
 		user := userMap[reactionModels[i].UserID]
-		livestream := liveStreamMap[reactionModels[i].LivestreamID]
 
 		reactions[i] = Reaction{
 			ID:         reactionModels[i].ID,
