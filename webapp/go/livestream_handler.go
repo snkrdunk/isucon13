@@ -525,3 +525,74 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 	}
 	return livestream, nil
 }
+
+func fillLivestreamsResponse(ctx context.Context, tx *sqlx.Tx, livestreamModels []LivestreamModel) ([]Livestream, error) {
+	if len(livestreamModels) == 0 {
+		return []Livestream{}, nil
+	}
+	ownerUserIDs := make([]int64, len(livestreamModels))
+	for i := range livestreamModels {
+		ownerUserIDs[i] = livestreamModels[i].UserID
+	}
+	sql, params, err := sqlx.In(`SELECT * FROM users WHERE id IN (?)`, ownerUserIDs)
+	if err != nil {
+		return nil, err
+	}
+	ownerModels := []UserModel{}
+	if err := tx.SelectContext(ctx, &ownerModels, sql, params...); err != nil {
+		return nil, err
+	}
+	owners, err := fillUsersResponse(ctx, tx, ownerModels)
+	if err != nil {
+		return nil, err
+	}
+	ownersMap := make(map[int64]User)
+	for i := range owners {
+		ownersMap[ownerUserIDs[i]] = owners[i]
+	}
+
+	livestreamIDs := make([]int64, len(livestreamModels))
+	for i := range livestreamModels {
+		livestreamIDs[i] = livestreamModels[i].ID
+	}
+	sql, params, err = sqlx.In(`SELECT lt.livestream_id AS livestream_id, t.id AS tag_id, t.name AS tag_name FROM livestream_tags AS lt JOIN tags AS t ON lt.tag_id=t.id WHERE lt.livestream_id IN (?)`, livestreamIDs)
+	if err != nil {
+		return nil, err
+	}
+	type LivestreamTag struct {
+		LivestreamID int64  `db:"livestream_id"`
+		TagID        int64  `db:"tag_id"`
+		TagName      string `db:"tag_name"`
+	}
+	livestreamTagModels := []LivestreamTag{}
+	if err := tx.SelectContext(ctx, &livestreamTagModels, sql, params...); err != nil {
+		return nil, err
+	}
+	livestreamTagMap := make(map[int64][]Tag)
+	for i := range livestreamTagModels {
+		livestreamTagMap[livestreamTagModels[i].LivestreamID] = append(livestreamTagMap[livestreamTagModels[i].LivestreamID], Tag{
+			ID:   livestreamTagModels[i].TagID,
+			Name: livestreamTagModels[i].TagName,
+		})
+	}
+
+	livestreams := make([]Livestream, len(livestreamModels))
+	for i := range livestreamModels {
+		owner, ok := ownersMap[livestreamModels[i].UserID]
+		if !ok {
+			return nil, fmt.Errorf("owner not found for livestream id %d", livestreamModels[i].ID)
+		}
+		livestreams[i] = Livestream{
+			ID:           livestreamModels[i].ID,
+			Owner:        owner,
+			Title:        livestreamModels[i].Title,
+			Tags:         livestreamTagMap[livestreamModels[i].ID],
+			Description:  livestreamModels[i].Description,
+			PlaylistUrl:  livestreamModels[i].PlaylistUrl,
+			ThumbnailUrl: livestreamModels[i].ThumbnailUrl,
+			StartAt:      livestreamModels[i].StartAt,
+			EndAt:        livestreamModels[i].EndAt,
+		}
+	}
+	return livestreams, nil
+}
