@@ -115,9 +115,7 @@ func getIconHandler(c echo.Context) error {
 	}
 
 	iconHashString := c.Request().Header.Get("If-None-Match")
-	fmt.Println("iconHashString: ", iconHashString)
 	iconHash := sha256.Sum256(image)
-	fmt.Println("iconHash: ", fmt.Sprintf("%x", iconHash))
 	if iconHashString != "" {
 		requestHash, err := strconv.Unquote(iconHashString)
 		if err != nil {
