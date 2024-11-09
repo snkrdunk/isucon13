@@ -35,7 +35,7 @@ var (
 	InsecureSkipVerify = true
 )
 
-const BaseDomain = "u.isucon.dev"
+const BaseDomain = "u.isucon.local"
 
 // 暇になってる接続のタイムアウト
 // NOTE: これを設定しないと、keepaliveで繋ぎっぱなしの接続が増え、Nginxでworker_connectionが不十分だというエラーログが出るようになる

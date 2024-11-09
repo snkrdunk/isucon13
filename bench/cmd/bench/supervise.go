@@ -130,12 +130,12 @@ func execBench(ctx context.Context, job *Job) (*Result, error) {
 	}
 	if production {
 		benchOptions = append(benchOptions, "--enable-ssl")
-		benchOptions = append(benchOptions, "--target", "https://pipe.u.isucon.dev:443")
+		benchOptions = append(benchOptions, "--target", "https://pipe.u.isucon.local:443")
 	} else {
 		// NOTE: 開発環境(Docker)
 		// benchOptions = append(benchOptions, "--dns-port", strconv.Itoa(1053))
 		benchOptions = append(benchOptions, "--enable-ssl")
-		benchOptions = append(benchOptions, "--target", "https://pipe.u.isucon.dev:443")
+		benchOptions = append(benchOptions, "--target", "https://pipe.u.isucon.local:443")
 	}
 	for _, server := range job.Servers {
 		benchOptions = append(benchOptions, "--webapp")
