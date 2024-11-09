@@ -77,6 +77,9 @@ func getReactionsHandler(c echo.Context) error {
 	if len(reactionUserIDs) == 0 {
 		return c.JSON(http.StatusOK, []Reaction{})
 	}
+	if len(reactionLiveStreamIDs) == 0 {
+		return c.JSON(http.StatusOK, []Reaction{})
+	}
 
 	sql, params, err := sqlx.In(`SELECT * FROM users WHERE id IN (?)`, reactionUserIDs)
 	if err != nil {
