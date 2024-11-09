@@ -116,7 +116,7 @@ func getIconHandler(c echo.Context) error {
 	iconHashString := c.Request().Header.Get("If-None-Match")
 	fmt.Println("iconHashString: ", iconHashString)
 	iconHash := sha256.Sum256(image)
-	fmt.Println("iconHash: ", iconHash)
+	fmt.Println("iconHash: ", fmt.Sprintf("%x", iconHash))
 	// if iconHashString != "" {
 	// 	if fmt.Sprintf("%x", iconHash) == iconHashString {
 	// 		return c.NoContent(http.StatusNotModified)
