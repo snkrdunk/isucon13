@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"sync"
 	"time"
 
@@ -111,6 +112,18 @@ func getIconHandler(c echo.Context) error {
 			return c.File(fallbackImage)
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
+		}
+	}
+
+	iconHashString := c.Request().Header.Get("If-None-Match")
+	iconHash := sha256.Sum256(image)
+	if iconHashString != "" {
+		requestHash, err := strconv.Unquote(iconHashString)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check If-None-Match: "+err.Error())
+		}
+		if fmt.Sprintf("%x", iconHash) == requestHash {
+			return c.NoContent(http.StatusNotModified)
 		}
 	}
 
