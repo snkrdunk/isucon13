@@ -12,6 +12,7 @@
   with_items:
     - ../webapp/sql/init.sh
     - ../webapp/sql/init.sql
+    - ../webapp/sql/init_isudns.sql
 
 - name: Deploy sql files
   become: true
