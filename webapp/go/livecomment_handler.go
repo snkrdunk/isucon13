@@ -84,7 +84,16 @@ func getLivecommentsHandler(c echo.Context) error {
 	}
 	defer tx.Rollback()
 
-	query := "SELECT * FROM livecomments WHERE livestream_id = ? ORDER BY created_at DESC"
+	var livestreamModel LivestreamModel
+	if err := tx.GetContext(ctx, &livestreamModel, "SELECT * FROM livestreams WHERE id = ?", livestreamID); err != nil {
+		return err
+	}
+	livestream, err := fillLivestreamResponse(ctx, tx, livestreamModel)
+	if err != nil {
+		return err
+	}
+
+	query := "SELECT * FROM livecomments WHERE livestream_id = ? ORDER BY id DESC"
 	if c.QueryParam("limit") != "" {
 		limit, err := strconv.Atoi(c.QueryParam("limit"))
 		if err != nil {
@@ -102,14 +111,9 @@ func getLivecommentsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livecomments: "+err.Error())
 	}
 
-	livecomments := make([]Livecomment, len(livecommentModels))
-	for i := range livecommentModels {
-		livecomment, err := fillLivecommentResponse(ctx, tx, livecommentModels[i])
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to fil livecomments: "+err.Error())
-		}
-
-		livecomments[i] = livecomment
+	livecomments, err := fillLivecommentsResponse(ctx, tx, livecommentModels, livestream)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livecomments: "+err.Error())
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -451,6 +455,45 @@ func fillLivecommentResponse(ctx context.Context, tx *sqlx.Tx, livecommentModel 
 	}
 
 	return livecomment, nil
+}
+
+func fillLivecommentsResponse(ctx context.Context, tx *sqlx.Tx, livecommentModels []LivecommentModel, livestream Livestream) ([]Livecomment, error) {
+	if len(livecommentModels) == 0 {
+		return []Livecomment{}, nil
+	}
+
+	userIDs := make([]int64, len(livecommentModels))
+	for i := range livecommentModels {
+		userIDs[i] = livecommentModels[i].UserID
+	}
+
+	var userModels []UserModel
+	q, params, err := sqlx.In("SELECT * FROM users WHERE id IN (?)", userIDs)
+	if err != nil {
+		return nil, err
+	}
+	if err := tx.SelectContext(ctx, &userModels, q, params...); err != nil {
+		return nil, err
+	}
+	users, err := fillUsersResponse(ctx, tx, userModels)
+	userIDUsers := make(map[int64]User)
+	for _, m := range users {
+		userIDUsers[m.ID] = m
+	}
+
+	livecomments := make([]Livecomment, len(livecommentModels))
+	for i := range livecommentModels {
+		m := livecommentModels[i]
+		livecomments[i] = Livecomment{
+			ID:         m.ID,
+			User:       userIDUsers[m.UserID],
+			Livestream: livestream,
+			Comment:    m.Comment,
+			Tip:        m.Tip,
+			CreatedAt:  m.CreatedAt,
+		}
+	}
+	return livecomments, nil
 }
 
 func fillLivecommentReportResponse(ctx context.Context, tx *sqlx.Tx, reportModel LivecommentReportModel) (LivecommentReport, error) {
