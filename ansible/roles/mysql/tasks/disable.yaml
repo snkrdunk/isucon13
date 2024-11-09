@@ -1,5 +1,0 @@
-- name: Disable MySQL service
-  service:
-    name: mysql
-    enabled: false
-    state: stopped
