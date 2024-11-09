@@ -114,12 +114,14 @@ func getIconHandler(c echo.Context) error {
 	}
 
 	iconHashString := c.Request().Header.Get("If-None-Match")
-	if iconHashString != "" {
-		iconHash := sha256.Sum256(image)
-		if fmt.Sprintf("%x", iconHash) == iconHashString {
-			return c.NoContent(http.StatusNotModified)
-		}
-	}
+	fmt.Println("iconHashString: ", iconHashString)
+	iconHash := sha256.Sum256(image)
+	fmt.Println("iconHash: ", iconHash)
+	// if iconHashString != "" {
+	// 	if fmt.Sprintf("%x", iconHash) == iconHashString {
+	// 		return c.NoContent(http.StatusNotModified)
+	// 	}
+	// }
 
 	return c.Blob(http.StatusOK, "image/jpeg", image)
 }
