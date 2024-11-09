@@ -86,7 +86,7 @@ func getReactionsHandler(c echo.Context) error {
 		log.Fatal(err)
 	}
 	userModels := []UserModel{}
-	tx.SelectContext(ctx, userModels, sql, params...)
+	tx.SelectContext(ctx, &userModels, sql, params...)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill reaction: "+err.Error())
 	}
@@ -105,7 +105,7 @@ func getReactionsHandler(c echo.Context) error {
 		log.Fatal(err)
 	}
 	livestreamModels := []LivestreamModel{}
-	if err := tx.SelectContext(ctx, livestreamModels, sql, params...); err != nil {
+	if err := tx.SelectContext(ctx, &livestreamModels, sql, params...); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill reaction: "+err.Error())
 	}
 
