@@ -430,3 +430,71 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 
 	return user, nil
 }
+
+func fillUsersResponse(ctx context.Context, tx *sqlx.Tx, userModels []UserModel) ([]User, error) {
+	userIDs := make([]int64, len(userModels))
+	for i, user := range userModels {
+		userIDs[i] = user.ID
+	}
+
+	themeModels := make([]ThemeModel, len(userIDs))
+	sql, params, err := sqlx.In("SELECT * FROM themes WHERE user_id IN (?)", userIDs)
+	if err != nil {
+		return nil, err
+	}
+	if err := tx.SelectContext(ctx, &themeModels, sql, params...); err != nil {
+		return nil, err
+	}
+	themeMap := make(map[int64]ThemeModel)
+	for _, theme := range themeModels {
+		themeMap[theme.UserID] = theme
+	}
+
+	type imagePerUser struct {
+		UserID int64  `db:"user_id"`
+		Image  []byte `db:"image"`
+	}
+	images := make([]imagePerUser, len(userIDs))
+	sql, params, err = sqlx.In("SELECT user_id, image FROM icons WHERE user_id IN (?)", userIDs)
+	if err != nil {
+		return nil, err
+	}
+	if err := tx.SelectContext(ctx, &images, sql, params...); err != nil {
+		return nil, err
+	}
+	imageMap := make(map[int64][]byte)
+	for _, image := range images {
+		imageMap[image.UserID] = image.Image
+	}
+
+	users := make([]User, len(userIDs))
+	for i, user := range userModels {
+		theme, ok := themeMap[user.ID]
+		if !ok {
+			return nil, fmt.Errorf("theme not found for user_id=%d", user.ID)
+		}
+
+		image, ok := imageMap[user.ID]
+		if !ok {
+			image, err = os.ReadFile(fallbackImage)
+			if err != nil {
+				return nil, err
+			}
+		}
+		iconHash := sha256.Sum256(image)
+
+		users[i] = User{
+			ID:          user.ID,
+			Name:        user.Name,
+			DisplayName: user.DisplayName,
+			Description: user.Description,
+			Theme: Theme{
+				ID:       theme.ID,
+				DarkMode: theme.DarkMode,
+			},
+			IconHash: fmt.Sprintf("%x", iconHash),
+		}
+	}
+
+	return users, nil
+}
