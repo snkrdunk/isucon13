@@ -8,19 +8,15 @@ all:
       hosts:
         nginx01:
           ansible_host: 57.181.68.126
-#    webapp:
-#      hosts:
-#        webapp01:
-#          ansible_host: 127.0.0.1
-#    db:
-#      hosts:
-#        db01:
-#          ansible_host: 127.0.0.1
     webapp:
       hosts:
         webapp01:
           ansible_host: 57.181.68.126
-#    db:
-#      hosts:
-#        db01:
-#          ansible_host: 127.0.0.1
+        webapp02:
+          ansible_host: 35.75.103.186
+        webapp03:
+          ansible_host: 43.206.76.83
+    db:
+      hosts:
+        db01:
+          ansible_host: 57.181.68.126
