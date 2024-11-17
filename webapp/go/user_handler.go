@@ -31,6 +31,15 @@ const (
 )
 
 var fallbackImage = "../img/NoImage.jpg"
+var noimage []byte
+
+func init() {
+	b, err := os.ReadFile(fallbackImage)
+	if err != nil {
+		panic(err)
+	}
+	noimage = b
+}
 
 type UserModel struct {
 	ID             int64  `db:"id"`
@@ -461,10 +470,7 @@ func getIconHashCache(ctx context.Context, userID int64) (string, error) {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return "", err
 		}
-		image, err = os.ReadFile(fallbackImage)
-		if err != nil {
-			return "", err
-		}
+		image = noimage
 	}
 
 	hash := fmt.Sprintf("%x", sha256.Sum256(image))
