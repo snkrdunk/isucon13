@@ -209,13 +209,13 @@ func postLivecommentHandler(c echo.Context) error {
 
 	var hitSpam int
 	for _, ngword := range ngwords {
-		if strings.Contains(ngword.Word, req.Comment) {
+		if strings.Contains(req.Comment, ngword.Word) {
 			hitSpam++
 		}
-		c.Logger().Infof("[hitSpam=%d] comment = %s", hitSpam, req.Comment)
-		if hitSpam >= 1 {
-			return echo.NewHTTPError(http.StatusBadRequest, "このコメントがスパム判定されました")
-		}
+	}
+	c.Logger().Infof("[hitSpam=%d] comment = %s", hitSpam, req.Comment)
+	if hitSpam >= 1 {
+		return echo.NewHTTPError(http.StatusBadRequest, "このコメントがスパム判定されました")
 	}
 
 	now := time.Now().Unix()
