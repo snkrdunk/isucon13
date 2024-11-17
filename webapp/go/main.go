@@ -4,6 +4,7 @@ package main
 // sqlx的な参考: https://jmoiron.github.io/sqlx/
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,6 +13,8 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
+	"sync"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
@@ -21,6 +24,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echolog "github.com/labstack/gommon/log"
+	"github.com/miekg/dns"
 )
 
 const (
@@ -38,6 +42,7 @@ func init() {
 	if secretKey, ok := os.LookupEnv("ISUCON13_SESSION_SECRETKEY"); ok {
 		secret = []byte(secretKey)
 	}
+	records.Store("pipe.u.isucon.local.", powerDNSSubdomainAddress)
 }
 
 type InitializeResponse struct {
@@ -117,6 +122,11 @@ func initializeHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to initialize: "+err.Error())
 	}
 
+	if err := initDNSServer(); err != nil {
+		c.Logger().Warnf("failed to init DNS server with err=%s", err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "fail to initiazie: "+err.Error())
+	}
+
 	go func() {
 		if _, err := http.Get("http://192.168.0.15:9000/api/group/collect"); err != nil {
 			log.Printf("failed to communicate with pprotein: %v", err)
@@ -147,6 +157,8 @@ func (j *JSONSerializer) Deserialize(c echo.Context, i interface{}) error {
 }
 
 func main() {
+	go runDNSServer()
+
 	e := echo.New()
 	e.JSONSerializer = &JSONSerializer{}
 	e.Debug = true
@@ -230,6 +242,68 @@ func main() {
 		e.Logger.Errorf("failed to start HTTP server: %v", err)
 		os.Exit(1)
 	}
+}
+
+var records sync.Map
+
+func initDNSServer() error {
+	f, err := os.Open("dns.txt")
+	if err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		k := strings.TrimSpace(scanner.Text())
+		records.Store(k+".u.isucon.local.", powerDNSSubdomainAddress)
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func runDNSServer() {
+	dns.HandleFunc("u.isucon.local.", handleDNSRequest)
+
+	server := &dns.Server{Addr: ":53", Net: "udp"}
+	err := server.ListenAndServe()
+	defer server.Shutdown()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func parseQuery(m *dns.Msg) {
+	for _, q := range m.Question {
+		switch q.Qtype {
+		case dns.TypeA:
+			v, ok := records.Load(q.Name)
+			if !ok {
+				continue
+			}
+			if ip, ok := v.(string); ok && ip != "" {
+				rr, err := dns.NewRR(fmt.Sprintf("%s A %s", q.Name, ip))
+				if err == nil {
+					m.Answer = append(m.Answer, rr)
+				}
+			}
+		}
+	}
+}
+
+func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
+	m := new(dns.Msg)
+	m.SetReply(r)
+	m.Compress = false
+
+	switch r.Opcode {
+	case dns.OpcodeQuery:
+		parseQuery(m)
+	}
+
+	w.WriteMsg(m)
 }
 
 type ErrorResponse struct {
