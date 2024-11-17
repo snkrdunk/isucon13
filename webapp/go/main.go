@@ -78,6 +78,7 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 			conf.Addr = net.JoinHostPort(addr, "3306")
 		}
 	}
+	fmt.Println("conf.Addr", conf.Addr)
 	if v, ok := os.LookupEnv(userEnvKey); ok {
 		conf.User = v
 	}
