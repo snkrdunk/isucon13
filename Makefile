@@ -25,3 +25,6 @@ deploy-nginx:
 
 deploy-webapp:
 	cd ansible && ansible-playbook -i inventory.yaml deploy_webapp.yaml
+
+deploy-ssh-key:
+	cd ansible && ansible-playbook -i inventory.yaml --private-key=~/.ssh/isucon.pem deploy_ssh_pub_keys.yaml
