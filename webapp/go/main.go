@@ -61,7 +61,6 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 	// 環境変数がセットされていなかった場合でも一旦動かせるように、デフォルト値を入れておく
 	// この挙動を変更して、エラーを出すようにしてもいいかもしれない
 	conf.Net = "tcp"
-	// conf.Addr = net.JoinHostPort("127.0.0.1", "3306")
 	conf.Addr = net.JoinHostPort("192.168.0.13", "3306")
 	conf.User = "isucon"
 	conf.Passwd = "isucon"
@@ -71,13 +70,13 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 	if v, ok := os.LookupEnv(networkTypeEnvKey); ok {
 		conf.Net = v
 	}
-	if addr, ok := os.LookupEnv(addrEnvKey); ok {
-		if port, ok2 := os.LookupEnv(portEnvKey); ok2 {
-			conf.Addr = net.JoinHostPort(addr, port)
-		} else {
-			conf.Addr = net.JoinHostPort(addr, "3306")
-		}
-	}
+	// if addr, ok := os.LookupEnv(addrEnvKey); ok {
+	// 	if port, ok2 := os.LookupEnv(portEnvKey); ok2 {
+	// 		conf.Addr = net.JoinHostPort(addr, port)
+	// 	} else {
+	// 		conf.Addr = net.JoinHostPort(addr, "3306")
+	// 	}
+	// }
 	fmt.Println("conf.Addr", conf.Addr)
 	if v, ok := os.LookupEnv(userEnvKey); ok {
 		conf.User = v
