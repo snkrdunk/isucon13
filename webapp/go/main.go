@@ -78,9 +78,10 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 	// 	}
 	// }
 	fmt.Println("conf.Addr", conf.Addr)
-	if v, ok := os.LookupEnv(userEnvKey); ok {
-		conf.User = v
-	}
+	// if v, ok := os.LookupEnv(userEnvKey); ok {
+	// 	conf.User = v
+	// }
+	fmt.Println("conf.User", conf.User)
 	if v, ok := os.LookupEnv(passwordEnvKey); ok {
 		conf.Passwd = v
 	}
