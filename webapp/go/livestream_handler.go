@@ -60,6 +60,17 @@ type LivestreamTagModel struct {
 	TagID        int64 `db:"tag_id" json:"tag_id"`
 }
 
+type ReservationSlotModels []ReservationSlotModel
+
+func (ms ReservationSlotModels) GetSlotCount(slot ReservationSlotModel) int64 {
+	for _, m := range ms {
+		if m.StartAt == slot.StartAt && m.EndAt == slot.EndAt {
+			return m.Slot
+		}
+	}
+	return 0
+}
+
 type ReservationSlotModel struct {
 	ID      int64 `db:"id" json:"id"`
 	Slot    int64 `db:"slot" json:"slot"`
@@ -105,16 +116,13 @@ func reserveLivestreamHandler(c echo.Context) error {
 
 	// 予約枠をみて、予約が可能か調べる
 	// NOTE: 並列な予約のoverbooking防止にFOR UPDATEが必要
-	var slots []*ReservationSlotModel
+	var slots ReservationSlotModels
 	if err := tx.SelectContext(ctx, &slots, "SELECT * FROM reservation_slots WHERE start_at >= ? AND end_at <= ? FOR UPDATE", req.StartAt, req.EndAt); err != nil {
 		c.Logger().Warnf("予約枠一覧取得でエラー発生: %+v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get reservation_slots: "+err.Error())
 	}
 	for _, slot := range slots {
-		var count int
-		if err := tx.GetContext(ctx, &count, "SELECT slot FROM reservation_slots WHERE start_at = ? AND end_at = ?", slot.StartAt, slot.EndAt); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get reservation_slots: "+err.Error())
-		}
+		count := slots.GetSlotCount(slot)
 		c.Logger().Infof("%d ~ %d予約枠の残数 = %d\n", slot.StartAt, slot.EndAt, slot.Slot)
 		if count < 1 {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("予約期間 %d ~ %dに対して、予約区間 %d ~ %dが予約できません", termStartAt.Unix(), termEndAt.Unix(), req.StartAt, req.EndAt))
