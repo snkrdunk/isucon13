@@ -451,10 +451,10 @@ func deleteIconHashCache(userID int64) {
 }
 
 func getIconHashCache(ctx context.Context, userID int64) (string, error) {
-	v, ok := iconHashCache.Load(userID)
-	if ok {
-		return v.(string), nil
-	}
+	// v, ok := iconHashCache.Load(userID)
+	// if ok {
+	// 	return v.(string), nil
+	// }
 
 	var image []byte
 	if err := dbConn.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userID); err != nil {
