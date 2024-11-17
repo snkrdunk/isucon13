@@ -523,3 +523,53 @@ func fillUsersResponse(ctx context.Context, tx *sqlx.Tx, userModels []UserModel)
 
 	return users, nil
 }
+
+func fillUsersResponseWithoutTx(ctx context.Context, userModels []UserModel) ([]User, error) {
+	if len(userModels) == 0 {
+		return []User{}, nil
+	}
+	userIDs := make([]int64, len(userModels))
+	for i, user := range userModels {
+		userIDs[i] = user.ID
+	}
+
+	themeModels := make([]ThemeModel, len(userIDs))
+	sql, params, err := sqlx.In("SELECT * FROM themes WHERE user_id IN (?)", userIDs)
+	if err != nil {
+		return nil, err
+	}
+	if err := dbConn.SelectContext(ctx, &themeModels, sql, params...); err != nil {
+		return nil, err
+	}
+	themeMap := make(map[int64]ThemeModel)
+	for _, theme := range themeModels {
+		themeMap[theme.UserID] = theme
+	}
+
+	users := make([]User, len(userIDs))
+	for i, user := range userModels {
+		theme, ok := themeMap[user.ID]
+		if !ok {
+			return nil, fmt.Errorf("theme not found for user_id=%d", user.ID)
+		}
+
+		hash, err := getIconHashCache(ctx, user.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		users[i] = User{
+			ID:          user.ID,
+			Name:        user.Name,
+			DisplayName: user.DisplayName,
+			Description: user.Description,
+			Theme: Theme{
+				ID:       theme.ID,
+				DarkMode: theme.DarkMode,
+			},
+			IconHash: hash,
+		}
+	}
+
+	return users, nil
+}
