@@ -3,11 +3,11 @@ all:
     bench:
       hosts:
         bench01:
-          ansible_host: 52.198.104.137
+          ansible_host: 3.114.202.86
     nginx:
       hosts:
         nginx01:
-          ansible_host: 57.182.81.174
+          ansible_host: 57.181.68.126
 #    webapp:
 #      hosts:
 #        webapp01:
@@ -19,7 +19,7 @@ all:
     webapp:
       hosts:
         webapp01:
-          ansible_host: 57.182.81.174
+          ansible_host: 57.181.68.126
 #    db:
 #      hosts:
 #        db01:
