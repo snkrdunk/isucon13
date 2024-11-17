@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/exec"
 	"strconv"
 	"sync"
 	"time"
@@ -279,9 +278,7 @@ func registerHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert user theme: "+err.Error())
 	}
 
-	if out, err := exec.Command("pdnsutil", "add-record", "u.isucon.local", req.Name, "A", "0", powerDNSSubdomainAddress).CombinedOutput(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, string(out)+": "+err.Error())
-	}
+	records.Store(req.Name+".u.isucon.local.", powerDNSSubdomainAddress)
 
 	user, err := fillUserResponse(ctx, tx, userModel)
 	if err != nil {
