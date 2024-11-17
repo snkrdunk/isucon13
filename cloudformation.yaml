@@ -172,54 +172,54 @@ Resources:
     Properties:
       Domain: vpc
       InstanceId: !Ref QualifyInstance1
-  # QualifyInstance2:
-  #   Type: AWS::EC2::Instance
-  #   Properties:
-  #     ImageId: ami-006d211cb716fe8a0
-  #     InstanceType: c5.large
-  #     SecurityGroupIds:
-  #       - !Ref SecurityGroup
-  #     SubnetId: !Ref Subnet
-  #     KeyName: !Ref MyKeyPair
-  #     PrivateIpAddress: "192.168.0.12"
-  #     IamInstanceProfile: !Ref InstanceProfile
-  #     BlockDeviceMappings:
-  #       - DeviceName: /dev/sda1
-  #         Ebs:
-  #           VolumeSize: 20
-  #           VolumeType: gp3
-  #     Tags:
-  #       - Key: Name
-  #         Value: isucon13-qualify-2
-  # QualifyInstanceIP2:
-  #   Type: AWS::EC2::EIP
-  #   Properties:
-  #     Domain: vpc
-  #     InstanceId: !Ref QualifyInstance2
-  # QualifyInstance3:
-  #   Type: AWS::EC2::Instance
-  #   Properties:
-  #     ImageId: ami-006d211cb716fe8a0
-  #     InstanceType: c5.large
-  #     SecurityGroupIds:
-  #       - !Ref SecurityGroup
-  #     SubnetId: !Ref Subnet
-  #     KeyName: !Ref MyKeyPair
-  #     PrivateIpAddress: "192.168.0.13"
-  #     IamInstanceProfile: !Ref InstanceProfile
-  #     BlockDeviceMappings:
-  #       - DeviceName: /dev/sda1
-  #         Ebs:
-  #           VolumeSize: 20
-  #           VolumeType: gp3
-  #     Tags:
-  #       - Key: Name
-  #         Value: isucon13-qualify-3
-  # QualifyInstanceIP3:
-  #   Type: AWS::EC2::EIP
-  #   Properties:
-  #     Domain: vpc
-  #     InstanceId: !Ref QualifyInstance3
+  QualifyInstance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-006d211cb716fe8a0
+      InstanceType: c5.large
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      SubnetId: !Ref Subnet
+      KeyName: !Ref MyKeyPair
+      PrivateIpAddress: "192.168.0.12"
+      IamInstanceProfile: !Ref InstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: isucon13-qualify-2
+  QualifyInstanceIP2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref QualifyInstance2
+  QualifyInstance3:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-006d211cb716fe8a0
+      InstanceType: c5.large
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      SubnetId: !Ref Subnet
+      KeyName: !Ref MyKeyPair
+      PrivateIpAddress: "192.168.0.13"
+      IamInstanceProfile: !Ref InstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: isucon13-qualify-3
+  QualifyInstanceIP3:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref QualifyInstance3
   BenchmarkerInstance:
     Type: AWS::EC2::Instance
     Properties:
