@@ -1,7 +1,19 @@
 TRUNCATE TABLE reservation_slots;
 TRUNCATE TABLE tags;
-TRUNCATE TABLE livestreams;
 TRUNCATE TABLE users;
+
+DROP TABLE IF EXISTS `livestreams`;
+CREATE TABLE `livestreams` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `user_id` BIGINT NOT NULL,
+    `title` VARCHAR(255) NOT NULL,
+    `description` text NOT NULL,
+    `playlist_url` VARCHAR(255) NOT NULL,
+    `thumbnail_url` VARCHAR(255) NOT NULL,
+    `start_at` BIGINT NOT NULL,
+    `end_at` BIGINT NOT NULL,
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
 DROP TABLE IF EXISTS `livestream_tags`;
 CREATE TABLE `livestream_tags` (
