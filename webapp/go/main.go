@@ -62,7 +62,7 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 	// この挙動を変更して、エラーを出すようにしてもいいかもしれない
 	conf.Net = "tcp"
 	conf.Addr = net.JoinHostPort("192.168.0.12", "3306")
-	conf.User = "qualify1"
+	conf.User = "superisucon"
 	conf.Passwd = "isucon"
 	conf.DBName = "isupipe"
 	conf.ParseTime = true
