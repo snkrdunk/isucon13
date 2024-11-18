@@ -112,10 +112,7 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 }
 
 func initializeHandler(c echo.Context) error {
-	iconHashCache.Range(func(key, value any) bool {
-		iconHashCache.Delete(key)
-		return true
-	})
+	iconHashCache.CleanupAll()
 
 	if out, err := exec.Command("../sql/init.sh").CombinedOutput(); err != nil {
 		c.Logger().Warnf("init.sh failed with err=%s", string(out))

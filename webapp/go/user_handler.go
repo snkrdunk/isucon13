@@ -178,7 +178,7 @@ func postIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
 
-	deleteIconHashCache(userID)
+	iconHashCache.Delete(userID)
 
 	return c.JSON(http.StatusCreated, &PostIconResponse{
 		ID: iconID,
@@ -450,14 +450,62 @@ func fillUserResponseWithoutTx(ctx context.Context, userModel UserModel) (User, 
 	return user, nil
 }
 
-var iconHashCache sync.Map
+var iconHashCache = &IconHashCache{}
 
-func deleteIconHashCache(userID int64) {
-	iconHashCache.Delete(userID)
+type IconHashCache struct {
+	data sync.Map
+}
+
+type entry struct {
+	value      string
+	expiration time.Time
+}
+
+func (m *IconHashCache) Set(key int64, hash string, ttl time.Duration) {
+	m.data.Store(key, entry{
+		value:      hash,
+		expiration: time.Now().Add(ttl),
+	})
+}
+
+func (m *IconHashCache) Get(key int64) (interface{}, bool) {
+	v, ok := m.data.Load(key)
+	if !ok {
+		return nil, false
+	}
+
+	e := v.(entry)
+	if time.Now().After(e.expiration) {
+		// 有効期限切れの場合は削除
+		m.data.Delete(key)
+		return nil, false
+	}
+	return e.value, true
+}
+
+func (m *IconHashCache) Delete(key int64) {
+	m.data.Delete(key)
+}
+
+func (m *IconHashCache) Cleanup() {
+	m.data.Range(func(key, value interface{}) bool {
+		e := value.(entry)
+		if time.Now().After(e.expiration) {
+			m.data.Delete(key)
+		}
+		return true
+	})
+}
+
+func (m *IconHashCache) CleanupAll() {
+	m.data.Range(func(key, value interface{}) bool {
+		m.data.Delete(key)
+		return true
+	})
 }
 
 func getIconHashCache(ctx context.Context, userID int64) (string, error) {
-	v, ok := iconHashCache.Load(userID)
+	v, ok := iconHashCache.Get(userID)
 	if ok {
 		return v.(string), nil
 	}
@@ -472,7 +520,7 @@ func getIconHashCache(ctx context.Context, userID int64) (string, error) {
 
 	hash := fmt.Sprintf("%x", sha256.Sum256(image))
 
-	iconHashCache.Store(userID, hash)
+	iconHashCache.Set(userID, hash, time.Second)
 
 	return hash, nil
 }
