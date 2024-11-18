@@ -520,7 +520,7 @@ func getIconHashCache(ctx context.Context, userID int64) (string, error) {
 
 	hash := fmt.Sprintf("%x", sha256.Sum256(image))
 
-	iconHashCache.Set(userID, hash, time.Second)
+	iconHashCache.Set(userID, hash, time.Second*2)
 
 	return hash, nil
 }
